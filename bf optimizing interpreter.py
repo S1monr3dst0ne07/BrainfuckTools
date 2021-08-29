@@ -190,6 +190,8 @@ class cMain:
         self.xIrLines = []
         self.xOutputCode = []
     
+        self.xInputBuffer = []
+    
         #IR translating
         for xCommandIterator in xCommandStream:
             if xCommandIterator == "+":
@@ -246,7 +248,7 @@ class cMain:
         #interpretation        
         xExePtr = 0
         xMemPtr = 0
-        xMem = [0]
+        xMem = [0 for _ in range(65535)]
         
         while len(self.xIrLines) > xExePtr:
             xLine = self.xIrLines[xExePtr]
@@ -260,26 +262,20 @@ class cMain:
                 xMem[xMemPtr] = (xMem[xMemPtr] - xAttribute) % 256
             
             elif xCommand == "movl":
-                for xI in range(xAttribute):
-                    if xMemPtr == 0:
-                        xMem.insert(0, 0)
-                        
-                    else:
-                        xMemPtr -= 1
+                xMemPtr -= xAttribute
                     
             elif xCommand == "movr":
-                for xI in range(xAttribute):
-                    if xMemPtr == len(xMem) - 1:
-                        xMem.append(0)
-    
-                    xMemPtr += 1
+                xMemPtr += xAttribute
                 
             elif xCommand == "output":
                 print(chr(xMem[xMemPtr]), end = "", flush = True)
                 
             elif xCommand == "input":
-                xInput = input(">>>")
-                xMem[xMemPtr] = ord(xInput) if xInput != "" else 0
+                if len(self.xInputBuffer) == 0:
+                    self.xInputBuffer += list(input(">>>"))
+                                
+                xInput = ord(self.xInputBuffer.pop(0)) if len(self.xInputBuffer) != 0 else 0
+                xMem[xMemPtr] = xInput
             
             elif xCommand == "loop":
                 if xMem[xMemPtr] == 0:
